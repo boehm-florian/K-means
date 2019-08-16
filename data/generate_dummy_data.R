@@ -7,7 +7,7 @@
 #+ global_options, include = FALSE
 knitr::opts_chunk$set(eval = FALSE)
 
-#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #' # Introduction
 
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #' - **sex:** The sex of the insured person.
 #' - **age:** The age of the insured person.
 #' - **sum_assured:** The sum insured assigned to the contract.
-#'
+#' - **ID:** A unique contract-ID for every policy.
 
 
 #' ### General Settings
@@ -80,7 +80,7 @@ sd_vs_male    <- c(2000 , 3000 , 1000, 4000 , 1000 , 6000)
 #+ generate-males
 males <- lapply(seq_along(mean_age_male), function(i) {
   data.table(
-    sex = as.factor("m"),
+    sex = "m",
     age = rnorm(count_per_group, mean = mean_age_male[i], sd = sd_age_male[i]) %>%
       round(),
     sum_assured = rnorm(count_per_group, mean = mean_vs_male[i], sd = sd_vs_male[i]) %>%
@@ -102,7 +102,7 @@ sd_vs_female    <- c(4000 , 1000, 3500 , 1500 , 1000 , 4200)
 #+ generate-females
 females <- lapply(seq_along(mean_age_male), function(i) {
   data.table(
-    sex = as.factor("f"),
+    sex = "f",
     age = rnorm(count_per_group, mean = mean_age_female[i], sd = sd_age_female[i]) %>%
       round(),
     sum_assured = rnorm(count_per_group, mean = mean_vs_female[i], sd = sd_vs_female[i]) %>%
@@ -111,7 +111,20 @@ females <- lapply(seq_along(mean_age_male), function(i) {
 }) %>% rbindlist()
 
 #' Once both sub-portfolios for males and females have been generated, they can be
-#' merged into a final data set for later use. This data set is in the last step
-#' exported as a text file with the name *insurance_portfolio.txt* and used in the case study.
+#' merged into a final data set holding all dummy policies. At the end the record 
+#' is extended by the column ID which represents a unique insurance policy. 
 #+ generate-portfolio
-rbind(males, females) %>% fwrite("insurance_portfolio.txt")
+policies <- rbind(males, females)[, ID := sample(.N)][order(ID)]
+
+
+#' Many data sets available in practice have for various reasons partly incorrect
+#' or missing data points. This behavior is simulated by setting some entries in
+#' the age column to invalid entries (NA). This prepared data set is in the last
+#' step exported as a text file with the name *insurance_portfolio.txt*.
+#+ save-portfolio
+policies %>% 
+  {sample(1:nrow(.), size = 10, replace = FALSE)} %>%
+  {policies[., age := NA_integer_]} %>% 
+  fwrite("insurance_portfolio.txt")
+
+

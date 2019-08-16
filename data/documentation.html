@@ -388,14 +388,10 @@ $(document).ready(function () {
 <li><strong>sex:</strong> The sex of the insured person.</li>
 <li><strong>age:</strong> The age of the insured person.</li>
 <li><strong>sum_assured:</strong> The sum insured assigned to the contract.</li>
-</ul>
-<div id="general-settings" class="section level3">
-<h3>General Settings</h3>
-<p>The pacman package is an R package management tool for loading and installing packages if necessary. The following packages are used for the data generation:</p>
-<ul>
+<li><p><strong>ID:</strong> A unique contract-ID for every policy. ### General Settings The pacman package is an R package management tool for loading and installing packages if necessary. The following packages are used for the data generation:</p></li>
 <li><strong>data.table:</strong> For filtering, grouping and transforming the data as well as fast read and write opterations. This package is particularly suitable for the fast processing of large amounts of data.</li>
 <li><strong>dplyr:</strong> This package is a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges. We need it especially for the use of the pipe operator.</li>
-<li><strong>rmarkdown:</strong> R Markdown provides an authoring framework for data science. One can use a single R Markdown file to save and execute code and generate high quality reports that can be shared with an audience. We suppress the warning for the <em>pacman</em> library because the message that the package was built under a different R-versions should not bother the user by beeing displayed on the console in red. Then the required packages are loaded and installed if necessary.</li>
+<li><p><strong>rmarkdown:</strong> R Markdown provides an authoring framework for data science. One can use a single R Markdown file to save and execute code and generate high quality reports that can be shared with an audience. We suppress the warning for the <em>pacman</em> library because the message that the package was built under a different R-versions should not bother the user by beeing displayed on the console in red. Then the required packages are loaded and installed if necessary.</p></li>
 </ul>
 <pre class="r"><code>suppressWarnings(if (!require(&quot;pacman&quot;)) install.packages(&quot;pacman&quot;))
 pacman::p_load(data.table, dplyr, rmarkdown)</code></pre>
@@ -412,7 +408,7 @@ sd_vs_male    &lt;- c(2000 , 3000 , 1000, 4000 , 1000 , 6000)</code></pre>
 <p>After all parameters for the 6 clusters have been defined, the individual data points can be created. For this purpose, one loops over the parameter set and 100 data points with the corresponding parameters are randomly generated in each pass. The randomly generated values for the age as well as the sum insured are then rounded to obtain integer values. The datasets of the 6 clusters are returned in separate data.tables and then converted using rbindlist into a dataset containing all male policyholders.</p>
 <pre class="r"><code>males &lt;- lapply(seq_along(mean_age_male), function(i) {
   data.table(
-    sex = as.factor(&quot;m&quot;),
+    sex = &quot;m&quot;,
     age = rnorm(count_per_group, mean = mean_age_male[i], sd = sd_age_male[i]) %&gt;%
       round(),
     sum_assured = rnorm(count_per_group, mean = mean_vs_male[i], sd = sd_vs_male[i]) %&gt;%
@@ -427,16 +423,20 @@ sd_vs_female    &lt;- c(4000 , 1000, 3500 , 1500 , 1000 , 4200)</code></pre>
 <p>The data set of the females can then be generated with the already defined parameters.</p>
 <pre class="r"><code>females &lt;- lapply(seq_along(mean_age_male), function(i) {
   data.table(
-    sex = as.factor(&quot;f&quot;),
+    sex = &quot;f&quot;,
     age = rnorm(count_per_group, mean = mean_age_female[i], sd = sd_age_female[i]) %&gt;%
       round(),
     sum_assured = rnorm(count_per_group, mean = mean_vs_female[i], sd = sd_vs_female[i]) %&gt;%
       round()
   )
 }) %&gt;% rbindlist()</code></pre>
-<p>Once both sub-portfolios for males and females have been generated, they can be merged into a final data set for later use. This data set is in the last step exported as a text file with the name <em>insurance_portfolio.txt</em> and used in the case study.</p>
-<pre class="r"><code>rbind(males, females) %&gt;% fwrite(&quot;insurance_portfolio.txt&quot;)</code></pre>
-</div>
+<p>Once both sub-portfolios for males and females have been generated, they can be merged into a final data set holding all dummy policies. At the end the record is extended by the column ID which represents a unique insurance policy.</p>
+<pre class="r"><code>policies &lt;- rbind(males, females)[, ID := sample(.N)][order(ID)]</code></pre>
+<p>Many data sets available in practice have for various reasons partly incorrect or missing data points. This behavior is simulated by setting some entries in the age column to invalid entries (NA). This prepared data set is in the last step exported as a text file with the name <em>insurance_portfolio.txt</em>.</p>
+<pre class="r"><code>policies %&gt;% 
+  {sample(1:nrow(.), size = 10, replace = FALSE)} %&gt;%
+  {policies[., age := NA_integer_]} %&gt;% 
+  fwrite(&quot;insurance_portfolio.txt&quot;)</code></pre>
 </div>
 
 
