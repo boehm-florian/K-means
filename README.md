@@ -24,6 +24,8 @@ One can use a single R Markdown file to save and execute code and generate high
 quality reports that can be shared with an audience.
 - **ggplot2:** ggplot2 is a system for declaratively creating graphics, based
 on The Grammar of Graphics. 
+- **gridExtra:** Provides a number of user-level functions to work with "grid"
+graphics, notably to arrange multiple grid-based plots on a page, and draw tables.
 We suppress the warning for the *pacman* library because the message that the 
 package was built under a different R-versions should not bother the user by
 beeing displayed on the console in red. Then the required packages are loaded
@@ -33,7 +35,7 @@ and installed if necessary.
 
 ```r
 suppressWarnings(if (!require("pacman")) install.packages("pacman"))
-pacman::p_load(data.table, dplyr, rmarkdown, ggplot2)
+pacman::p_load(data.table, dplyr, rmarkdown, ggplot2, gridExtra)
 ```
 
 For the analysis of the data functions are used which work with random numbers.
@@ -159,6 +161,49 @@ ggplot(data = clean_data, aes(x = age, y = sum_assured, color = sex)) +
 ![](k-means_files/figure-html/plot-colored-1.png)<!-- --> 
 
 # K-means
+
+
+
+```r
+lPlots <- lapply(1:4, function(k) {
+  k_resut <- kmeans(clean_data[, .(age, sum_assured)],
+                    k,
+                    nstart = 50L,
+                    iter.max = 100L)
+  plot_centers <- k_resut$centers %>% as.data.table()
+  ggplot() +
+    geom_point(
+      data = clean_data,
+      aes(
+        x = age,
+        y = sum_assured,
+        color = as.factor(k_resut$cluster)
+      ),
+      show.legend = FALSE
+    ) +
+    geom_point(
+      data = plot_centers,
+      aes(x = age, y = sum_assured),
+      size = 3L,  # filled diamonds
+      shape = 18L 
+    )
+})
+```
+
+```r
+do.call("grid.arrange", c(lPlots, ncol = 2))
+```
+
+![](k-means_files/figure-html/grid-nonScaled-1.png)<!-- --> 
+
+```r
+# ggplot(test, aes(x = a, y = wss)) + geom_point() + geom_line()
+# plot(1:k.max, wss,
+#      type="b", pch = 19, frame = FALSE, 
+#      xlab="Number of clusters K",
+#      ylab="Total within-clusters sum of squares")
+```
+
 
 ---
 title: "k-means.R"
