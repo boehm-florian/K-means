@@ -1,11 +1,19 @@
 #' ---
-#' title:   "Script for generating dummy data"
+#' title:   "Use Case K-means"
 #' author:  "Dietmar H. and Fabian P."
 #' date:    "Aug 2019"
 #' ---
 
+
+#+ dummy, include=FALSE
+#  github_document: default
+#  html_document: default
+#  pdf_document: default
+
+
 #+ global_options, include = FALSE
 knitr::opts_chunk$set(eval = TRUE)
+options(tinytex.verbose = TRUE)
 
 #setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -24,19 +32,26 @@ knitr::opts_chunk$set(eval = TRUE)
 #'  
 #' - **data.table:** For filtering, grouping and transforming the data as well
 #' as fast read and write opterations. This package is particularly suitable for
-#' the fast processing of large amounts of data.
+#' the fast processing of large amounts of data. 
+#' ^[https://www.rdocumentation.org/packages/data.table/versions/1.12.2]
 #' - **dplyr:** This package is a grammar of data manipulation, providing a consistent
 #' set of verbs that help you solve the most common data manipulation challenges.
 #' We need it especially for the use of the pipe operator.
+#' ^[https://www.rdocumentation.org/packages/dplyr/versions/0.7.8]
 #' - **rmarkdown:** R Markdown provides an authoring framework for data science.
 #' One can use a single R Markdown file to save and execute code and generate high
 #' quality reports that can be shared with an audience.
+#' ^[https://www.rdocumentation.org/packages/rmarkdown/versions/1.14]
 #' - **ggplot2:** ggplot2 is a system for declaratively creating graphics, based
 #' on The Grammar of Graphics. 
+#' ^[https://www.rdocumentation.org/packages/ggplot2/versions/3.2.1]
 #' - **gridExtra:** Provides a number of user-level functions to work with "grid"
 #' graphics, notably to arrange multiple grid-based plots on a page, and draw tables.
+#' ^[https://www.rdocumentation.org/packages/gridExtra/versions/2.3]
+#'
 
-#' We suppress the warning for the *pacman* library because the message that the 
+
+#' We suppress the warning for the `pacman` library because the message that the 
 #' package was built under a different R-versions should not bother the user by
 #' beeing displayed on the console in red. Then the required packages are loaded
 #' and installed if necessary. 
@@ -69,12 +84,16 @@ raw_data %>% str()
 #+ set-factor
 raw_data[, sex := as.factor(sex)]
 
-#' A more detailed analysis of the input data using the summary function shows that:
+#' A more detailed analysis of the input data using the `summary` function shows that:
+#' 
 #' 1. The portfolio consists of 600 female and 600 male policyholders.
+#' 
 #' 2. The age is between 8 and 87 years, which suggests that there are no 
 #' implausible data points.
+#' 
 #' 3. There are 10 policyholders whose age is indicated with NA. This indicates 
 #' missing or incomplete data.
+#' 
 #' 4. The sums insured are between 5119 and 61485. If one looks at the quantiles,
 #' the minimum and maximum values, one can see that at first glance there are no
 #' extreme outliers. Another good way to analyze the portfolio is the visual 
@@ -93,14 +112,20 @@ clean_data <- raw_data[!is.na(age),]
 #' is carried out. For this purpose, the sum insured is plotted against age in a
 #' point plot. The previous assumption that there are no outliers can be confirmed 
 #' visually and new knowledge about the data structure can be gained. A total of
-#' 4 different clusters can be identified as seen in the plot below. A cluster shows
-#' policies with a sum insured of about 10.000 and ages in the entire range of 
-#' observations. Another cluster are those policies that have an insurance sum
-#' of approximately 30.000 to 50.000 and an age of approximately 22. The next 
-#' cluster covers policies with an sum insured in the range of 20.000 up to 
-#' 50.000 and an age of 40 to 50.The last cluster is a little more inhomogeneous
-#' than the others in terms of both age and sum insured. It covers ages from 60 
-#' to 80 and sums insured from 25.000 to 60.000.
+#' 4 different clusters can be identified as seen in the plot below. 
+#' 
+#'  - A cluster shows policies with a sum insured of about 10.000 and ages in the
+#'   entire range of  observations. 
+#'   
+#'  - Another cluster are those policies that have an insurance sum of approximately
+#'   30.000 to 50.000 and an age of approximately 22. 
+#'   
+#'  - The next cluster covers policies with an sum insured in the range of 20.000 
+#'   up to 50.000 and an age of 40 to 50.
+#'   
+#'  - The last cluster is a little more inhomogeneous than the others in terms of 
+#'   both age and sum insured. It covers ages from 60 to 80 and sums insured from
+#'   25.000 to 60.000.
 #+ plot-all
 ggplot(data = clean_data, aes(x = age, y = sum_assured)) + geom_point()
 
@@ -121,7 +146,31 @@ ggplot(data = clean_data, aes(x = age, y = sum_assured, color = sex)) +
   geom_point()
 
 #' # K-means
+#' Processing and summarizing large amounts of data to find hidden patterns is a 
+#' topic of interest in many different areas. K means is a suitable algorithm that 
+#' divides the data set into a previously known number of $k$ groups. The aim is of 
+#' course to find an optimal partition which need to be further defined. The data
+#' set must be divided into $k$ partitions so that the sum of the squared deviations
+#' from the cluster centers to all data points assigned to the corresponding cluster
+#' is minimal. Mathematically, this corresponds to the optimization of a distance 
+#' function: 
 #' 
+#' Given a set of $n$ observations $(\textbf{x}_1, \textbf{x}_2, ..., \textbf{x}_n)$
+#' with $\textbf{x}_i \in \mathbb{R}^k$, the $k$-means algorithm partitions the $n$
+#' observations into $k \leq n$ sets $C = \{C_1, C_2, ..., C_k\}$ such that 
+#' ^[https://en.wikipedia.org/wiki/K-means_clustering]
+#'  $$\underset{C}{arg~min}\sum_{j=1}^k\sum_{x \in C_j}\lVert \textbf{x} - {\mu}_j \rVert^2$$
+#'  
+
+#' The K-means algorithm is already implemented by default and can be called using
+#' the function `kmeans`. In a first step, the algorithm is applied to the unscaled 
+#' values for the age and the sum insured, without distinguishing between the sexes.
+#' The number of clusters is successively increased from 1 to 4 and the results
+#' are displayed graphically. All data points belonging to the same cluster are
+#' displayed in the same color and the cluster centers are indicated by black diamonds.
+#' Since K-means randomly selects the cluster centers in the first step, the
+#' algorithm is executed 50 times `nstart = 50L` and the best partitioning is selected. 
+
 
 
 #+ kmeans-nonscaled
@@ -149,10 +198,28 @@ lPlots <- lapply(1:4, function(k) {
     )
 })
 
+#' After all results have been generated, they are arranged in a single plot.
+#' It is obvious that the algorithm does not seem to be able to recognize the 4 
+#' existing clusters correctly. It is rather noticeable that the data set is
+#' divided into horizontal slices and apparently no consideration is given to
+#' the different age structures. Also a further increase of the number of clusters
+#' does not bring any improvement but leads to a more granular horizontal clustering
+#' of the data set. 
 #+ grid-nonScaled
 do.call("grid.arrange", c(lPlots, ncol = 2))
 
 
+#' A hint why clustering did not work as desired is given by the form of the cluster.
+#' Those should be circular, but in this case they are strongly elliptical. As 
+#' defined above, the algorithm minimizes the quadratic deviations. The age in the
+#' data set has a value range from 8 to 87 and the sum assured has a value range
+#' from 5119 to 61485. Therefore, it is not surprising that the algorithm tries 
+#' to find clusters that have a very similar sum insured, since deviations in this
+#' dimension are strongly reflected in the minimization function. One way to solve
+#' this problem is to scale the input data. 
+
+
+#+ ellbow, include=FALSE
 # ggplot(test, aes(x = a, y = wss)) + geom_point() + geom_line()
 # plot(1:k.max, wss,
 #      type="b", pch = 19, frame = FALSE, 
