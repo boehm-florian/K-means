@@ -129,7 +129,6 @@ Processing and summarizing large amounts of data to find hidden patterns is a to
 
 Given a set of *n* observations (**x**<sub>1</sub>, **x**<sub>2</sub>, ..., **x**<sub>*n*</sub>) with **x**<sub>*i*</sub> ∈ ℝ<sup>*k*</sup>, the *k*-means algorithm partitions the *n* observations into *k* ≤ *n* sets *C* = {*C*<sub>1</sub>, *C*<sub>2</sub>, ..., *C*<sub>*k*</sub>} such that [6]
 
-<img src="http://bit.ly/2YZcb7K" align="center" border="0" alt="\underset{C}{arg~min}\sum_{j=1}^k\sum_{x \in C_j}\lVert \textbf{x} - {\mu}_j \rVert^2" width="200" height="57" />
 
 The K-means algorithm is already implemented by default and can be called using the function `kmeans`. In a first step, the algorithm is applied to the unscaled values for the age and the sum insured, without distinguishing between the sexes. The number of clusters is successively increased from 1 to 4 and the results are displayed graphically. All data points belonging to the same cluster are displayed in the same color and the cluster centers are indicated by black diamonds. Since K-means randomly selects the cluster centers in the first step, the algorithm is executed 50 times `nstart = 50L` and the best partitioning is selected.
 
