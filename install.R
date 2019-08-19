@@ -1,5 +1,4 @@
 install.packages("dplyr")
-install.packages("rmarkdown")
 install.packages("data.table")
 install.packages("ggplot2")
 install.packages("gridExtra")
