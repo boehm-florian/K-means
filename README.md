@@ -3,6 +3,8 @@ Use Case K-means
 Dietmar H. and Fabian P.
 Aug 2019
 
+Start Interactive Session: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/smalldatascience/K-means/master?filepath=k_means.ipynb)
+
 Introduction
 ============
 
