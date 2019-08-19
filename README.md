@@ -8,7 +8,11 @@ date:    "Aug 2019"
 
 
 # Introduction
-Still to fill
+This usecase gives a first introduction to cluster analysis using the K-means
+algorithm. A fictitious insurance portfolio with 1200 data records is used,
+which has only 3 characteristics, namely age, sex and sum assured. The aim is
+to get a first overview of the data, to determine the optimal number of clusters
+by visual methods and to find them with the help of the k-means method.  
 
 # General Settings
 The pacman package is an R package management tool for loading and installing
@@ -129,7 +133,8 @@ After a first overview of the data has already been given, the visual inspection
 is carried out. For this purpose, the sum insured is plotted against age in a
 point plot. The previous assumption that there are no outliers can be confirmed 
 visually and new knowledge about the data structure can be gained. A total of
-4 different clusters can be identified as seen in the plot below. 
+4 different clusters can be identified as seen in the plot below with 3 of them
+nearly circular and the fourth one on the bottom on the plot strongly elliptical.
 
  - A cluster shows policies with a sum insured of about 10.000 and ages in the
   entire range of  observations. 
@@ -154,8 +159,9 @@ ggplot(data = clean_data, aes(x = age, y = sum_assured)) + geom_point()
 In the previous plot, all data points were viewed in a single graph. In the 
 next step a point plot is created, separated into men and women. It is important
 to note that the scaling of the two plots is the same. It becomes apparent that
-there are now 6 clusters for both men and women. The single cluster with
+there are now 6 clusters for both men and women. The single elliptical cluster with
 an insured sum of approximately 10000 is now divided into 3 different age groups. 
+Each of these 3 newly formed clusters is almost circular shaped. 
 
 
 ```r
@@ -244,7 +250,7 @@ do.call("grid.arrange", c(lPlots, ncol = 2))
 
 ![](k-means_files/figure-html/grid-nonScaled-1.png)<!-- --> 
 
-A hint why clustering did not work as desired is given by the form of the cluster.
+A hint why clustering did not work as expected is given by the form of the cluster.
 Those should be circular, but in this case they are strongly elliptical. As 
 defined above, the algorithm minimizes the quadratic deviations. The age in the
 data set has a value range from 8 to 87 and the sum assured has a value range
@@ -253,11 +259,126 @@ to find clusters that have a very similar sum insured, since deviations in this
 dimension are strongly reflected in the minimization function. One way to solve
 this problem is to scale the input data. 
 
+One of the many ways to scale the data is to use a z-transformation. The mean
+value and the standard deviation are calculated for both the age and the sum
+insured and then applied to the individual data points as follows:
+^[https://en.wikipedia.org/wiki/Standard_score]
+ $$x' = \frac{x - \bar{x}}{\sigma}$$
 
 
+```r
+cols <- c("age", "sum_assured")
+clean_data_scaled <- clean_data[, (cols) := lapply(.SD, scale), .SDcols = cols]
+```
 
----
-title: "k-means.r"
-author: "Desktop"
-date: "2019-08-17"
----
+If one graphically displays the scaled data as before, one can see that the 
+cluster structure as well as the number of clusters determined previously has
+remained the same. However, it can also be seen that the axis scaling has 
+changed and now the values on the x and y axes have a similar value range. 
+
+
+```r
+ggplot(data = clean_data_scaled, aes(x = age, y = sum_assured, color = sex)) +
+  geom_point()
+```
+
+![](k-means_files/figure-html/scaled-cluster-1.png)<!-- --> 
+
+If k-means is now applied to the transformed data and the number of clusters
+is gradually increased from 1 to 6, a different behavior can be noticed. 
+
+
+```r
+lPlots_scaled <- lapply(1:6, function(k) {
+  k_resut <- kmeans(clean_data_scaled[, .(age, sum_assured)],
+                    k,
+                    nstart = 50L,
+                    iter.max = 100L)
+  plot_centers <- k_resut$centers %>% as.data.table()
+  ggplot() +
+    geom_point(
+      data = clean_data_scaled,
+      aes(
+        x = age,
+        y = sum_assured,
+        color = as.factor(k_resut$cluster)
+      ),
+      show.legend = FALSE
+    ) +
+    geom_point(
+      data = plot_centers,
+      aes(x = age, y = sum_assured),
+      size = 3L,  # filled diamonds
+      shape = 18L 
+    )
+})
+```
+
+The following conclusions can be drawn from the graphical representation of the
+cluster results:
+
+- The data is no longer clustered into horizontal slices as before. This is
+  particularly noticeable starting with a minimum of 3 clusters.  
+- With a $k$ of 4 the algorithm is not able to recognize the clusters as desired. 
+  In particular, the cluster at the bottom of the image, which extends over the
+  entire age range, is wrongly divided into 2 different clusters.    
+- Staring with a $k$ of 5 all three clusters in the upper half of the image 
+  are clustered correctly. It is noteable that as a side effect the cluster
+  in the bottom of the image is arbitrarily split into multiple clusters.
+  
+
+
+```r
+do.call("grid.arrange", c(lPlots_scaled, ncol = 2))
+```
+
+![](k-means_files/figure-html/plot-scaled-1.png)<!-- --> 
+
+After the analysis has been carried out independently of gender, a gender-specific
+clustering of the portfolio is carried out in the last part. To this end, all
+the findings gathered so far, such as the need for scaling, are taken into account.
+The findings of the visual inspection are also used, which have shown that 6 
+clusters can be observed for each sex. For this reason, the final analysis is
+started with $k = 6$.  
+
+
+```r
+lPlots_sex <- lapply(c("m", "f"), function(x) {
+  k_resut <- kmeans(clean_data_scaled[sex == x, .(age, sum_assured)],
+                    6, # search for six clusters
+                    nstart = 50L,
+                    iter.max = 100L)
+  plot_centers <- k_resut$centers %>% as.data.table()
+  ggplot() +
+    geom_point(
+      data = clean_data_scaled[sex == x, ],
+      aes(
+        x = age,
+        y = sum_assured,
+        color = as.factor(k_resut$cluster)
+      ),
+      show.legend = FALSE
+    ) +
+    geom_point(
+      data = plot_centers,
+      aes(x = age, y = sum_assured),
+      size = 3L,  # filled diamonds
+      shape = 18L 
+    )
+})
+```
+
+The result of the K-means algorithm is now exactly what was expected. The 6 
+correct clusters could be identified for both male and female policyholders 
+as shown in the graph below. 
+
+
+```r
+do.call("grid.arrange", c(lPlots_sex, ncol = 2))
+```
+
+![](k-means_files/figure-html/plot-sex-1.png)<!-- --> 
+
+For data sets in which a visual inspection of the data is not effective or is 
+not feasible due to the higher dimensionality, there are different methods to
+determine the optimal number of clusters. 
