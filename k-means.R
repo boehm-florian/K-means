@@ -18,7 +18,11 @@ knitr::opts_chunk$set(eval = TRUE)
 
 #' # Introduction
 
-#' Still to fill
+#' This usecase gives a first introduction to cluster analysis using the K-means
+#' algorithm. A fictitious insurance portfolio with 1200 data records is used,
+#' which has only 3 characteristics, namely age, sex and sum assured. The aim is
+#' to get a first overview of the data, to determine the optimal number of clusters
+#' by visual methods and to find them with the help of the k-means method.  
 #' 
 
 
@@ -291,7 +295,7 @@ do.call("grid.arrange", c(lPlots_scaled, ncol = 2))
 #+ cluster-sex
 lPlots_sex <- lapply(c("m", "f"), function(x) {
   k_resut <- kmeans(clean_data_scaled[sex == x, .(age, sum_assured)],
-                    6,
+                    6, # search for six clusters
                     nstart = 50L,
                     iter.max = 100L)
   plot_centers <- k_resut$centers %>% as.data.table()
@@ -318,3 +322,7 @@ lPlots_sex <- lapply(c("m", "f"), function(x) {
 #' as shown in the graph below. 
 #+ plot-sex
 do.call("grid.arrange", c(lPlots_sex, ncol = 2))
+
+#' For data sets in which a visual inspection of the data is not effective or is 
+#' not feasible due to the higher dimensionality, there are different methods to
+#' determine the optimal number of clusters. 
