@@ -128,7 +128,8 @@ K-means
 Processing and summarizing large amounts of data to find hidden patterns is a topic of interest in many different areas. K means is a suitable algorithm that divides the data set into a previously known number of *k* groups. The aim is of course to find an optimal partition which need to be further defined. The data set must be divided into *k* partitions so that the sum of the squared deviations from the cluster centers to all data points assigned to the corresponding cluster is minimal. Mathematically, this corresponds to the optimization of a distance function:
 
 Given a set of *n* observations (**x**<sub>1</sub>, **x**<sub>2</sub>, ..., **x**<sub>*n*</sub>) with **x**<sub>*i*</sub> ∈ ℝ<sup>*k*</sup>, the *k*-means algorithm partitions the *n* observations into *k* ≤ *n* sets *C* = {*C*<sub>1</sub>, *C*<sub>2</sub>, ..., *C*<sub>*k*</sub>} such that [6]
-$$\\underset{C}{arg~min}\\sum\_{j=1}^k\\sum\_{x \\in C\_j}\\lVert \\textbf{x} - {\\mu}\_j \\rVert^2$$
+
+<img src="http://bit.ly/2YZcb7K" align="center" border="0" alt="\underset{C}{arg~min}\sum_{j=1}^k\sum_{x \in C_j}\lVert \textbf{x} - {\mu}_j \rVert^2" width="200" height="57" />
 
 The K-means algorithm is already implemented by default and can be called using the function `kmeans`. In a first step, the algorithm is applied to the unscaled values for the age and the sum insured, without distinguishing between the sexes. The number of clusters is successively increased from 1 to 4 and the results are displayed graphically. All data points belonging to the same cluster are displayed in the same color and the cluster centers are indicated by black diamonds. Since K-means randomly selects the cluster centers in the first step, the algorithm is executed 50 times `nstart = 50L` and the best partitioning is selected.
 
@@ -169,7 +170,8 @@ do.call("grid.arrange", c(lPlots, ncol = 2))
 A hint why clustering did not work as expected is given by the form of the cluster. Those should be circular, but in this case they are strongly elliptical. As defined above, the algorithm minimizes the quadratic deviations. The age in the data set has a value range from 8 to 87 and the sum assured has a value range from 5119 to 61485. Therefore, it is not surprising that the algorithm tries to find clusters that have a very similar sum insured, since deviations in this dimension are strongly reflected in the minimization function. One way to solve this problem is to scale the input data.
 
 One of the many ways to scale the data is to use a z-transformation. The mean value and the standard deviation are calculated for both the age and the sum insured and then applied to the individual data points as follows: [7]
-$$x' = \\frac{x - \\bar{x}}{\\sigma}$$
+
+<img src="http://bit.ly/2KQu8LI" align="center" border="0" alt="x' = \frac{x - \bar{x}}{\sigma}" width="86" height="43" />
 
 ``` r
 cols <- c("age", "sum_assured")
@@ -276,3 +278,5 @@ For data sets in which a visual inspection of the data is not effective or is no
 [6] <https://en.wikipedia.org/wiki/K-means_clustering>
 
 [7] <https://en.wikipedia.org/wiki/Standard_score>
+
+
